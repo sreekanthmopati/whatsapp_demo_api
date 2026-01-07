@@ -118,21 +118,38 @@ app.post("/webhook", async (req: Request, res: Response) => {
     }
 
     /* -------- BUTTON RESPONSE -------- */
-    if (message.type === "button") {
-      const payload = message.button.payload;
-      console.log("Button clicked:", payload);
+    // if (message.type === "button") {
+    //   const payload = message.button.payload;
+    //   console.log("Button clicked:", payload);
 
-      if (payload === "ORDER_HELP") {
-        await sendTextMessage(from, "📦 Please share your Order ID");
-      } else if (payload === "TRACK_ORDER") {
-        await sendTextMessage(from, "🔍 Please enter your Order ID to track");
-      } else if (payload === "SUPPORT") {
-        await sendTextMessage(
-          from,
-          "📞 Our support team will contact you shortly."
-        );
-      }
-    }
+    //   if (payload === "ORDER_HELP") {
+    //     await sendTextMessage(from, "📦 Please share your Order ID");
+    //   } else if (payload === "TRACK_ORDER") {
+    //     await sendTextMessage(from, "🔍 Please enter your Order ID to track");
+    //   } else if (payload === "SUPPORT") {
+    //     await sendTextMessage(
+    //       from,
+    //       "📞 Our support team will contact you shortly."
+    //     );
+    //   }
+    // }
+
+    /* ---------- BUTTON CLICK ---------- */
+if (message.type === "button") {
+  const payload = message.button.payload;
+  console.log("Button clicked:", payload);
+
+  if (payload === "BTN_1") {
+    await sendTextMessage(from, "✅ You clicked Button 1");
+  } 
+  else if (payload === "BTN_2") {
+    await sendTextMessage(from, "✅ You clicked Button 2");
+  } 
+  else if (payload === "BTN_3") {
+    await sendTextMessage(from, "✅ You clicked Button 3");
+  }
+}
+
 
     res.sendStatus(200);
   } catch (err) {
@@ -145,6 +162,55 @@ app.post("/webhook", async (req: Request, res: Response) => {
    3️⃣ SEND BUTTON MESSAGE
    ============================ */
 
+// async function sendWelcomeButtons(to: string) {
+//   await axios.post(
+//     `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`,
+//     {
+//       messaging_product: "whatsapp",
+//       to,
+//       type: "interactive",
+//       interactive: {
+//         type: "button",
+//         body: {
+//           text: "👋 Welcome! How can I help you today?",
+//         },
+//         action: {
+//           buttons: [
+//             {
+//               type: "reply",
+//               reply: {
+//                 id: "ORDER_HELP",
+//                 title: "📦 Order help",
+//               },
+//             },
+//             {
+//               type: "reply",
+//               reply: {
+//                 id: "TRACK_ORDER",
+//                 title: "🔍 Track order",
+//               },
+//             },
+//             {
+//               type: "reply",
+//               reply: {
+//                 id: "SUPPORT",
+//                 title: "📞 Talk to support",
+//               },
+//             },
+//           ],
+//         },
+//       },
+//     },
+//     {
+//       headers: {
+//         Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+//         "Content-Type": "application/json",
+//       },
+//     }
+//   );
+// }
+
+
 async function sendWelcomeButtons(to: string) {
   await axios.post(
     `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`,
@@ -155,29 +221,29 @@ async function sendWelcomeButtons(to: string) {
       interactive: {
         type: "button",
         body: {
-          text: "👋 Welcome! How can I help you today?",
+          text: "🧪 Button test. Click any button:",
         },
         action: {
           buttons: [
             {
               type: "reply",
               reply: {
-                id: "ORDER_HELP",
-                title: "📦 Order help",
+                id: "BTN_1",
+                title: "Button 1",
               },
             },
             {
               type: "reply",
               reply: {
-                id: "TRACK_ORDER",
-                title: "🔍 Track order",
+                id: "BTN_2",
+                title: "Button 2",
               },
             },
             {
               type: "reply",
               reply: {
-                id: "SUPPORT",
-                title: "📞 Talk to support",
+                id: "BTN_3",
+                title: "Button 3",
               },
             },
           ],
@@ -192,6 +258,7 @@ async function sendWelcomeButtons(to: string) {
     }
   );
 }
+
 
 /* ============================
    4️⃣ SEND TEXT MESSAGE
