@@ -39,20 +39,19 @@
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 
-
+import axios from "axios";
 
 dotenv.config();
 
 const app = express();
 const cors = require("cors");
-const axios = require("axios");
 app.use(cors());
 app.use(express.json());
 
 const PORT = 5000;
 
 /* ============================
-   TEMP WHATSAPP CONFIG (INLINE)
+   WHATSAPP CONFIG (INLINE)
    ============================ */
 
 const VERIFY_TOKEN = "my_verify_token"; // same value in Meta dashboard
@@ -68,7 +67,7 @@ app.get("/", (req, res) => {
 });
 
 /* ============================
-   1️⃣ WEBHOOK VERIFICATION (GET)
+   WEBHOOK VERIFICATION (GET)
    ============================ */
 
 app.get("/webhook", (req: Request, res: Response) => {
@@ -77,17 +76,16 @@ app.get("/webhook", (req: Request, res: Response) => {
   const challenge = req.query["hub.challenge"];
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("Webhook verified ✅");
-    res.status(200).send(challenge);
-     return;
+   res.status(200).send(challenge);
+    return ;
   }
 
-  res.sendStatus(403);
+   res.sendStatus(403);
    return;
 });
 
 /* ============================
-   2️⃣ RECEIVE MESSAGES (POST)
+   RECEIVE MESSAGES (POST)
    ============================ */
 
 app.post("/webhook", async (req: Request, res: Response) => {
@@ -95,121 +93,49 @@ app.post("/webhook", async (req: Request, res: Response) => {
     const message =
       req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
-    if (!message) {
-       res.sendStatus(200);
-       return
-    }
+    if (!message){
+ res.sendStatus(200);
+ return;
+    } 
 
     const from = message.from;
 
-    /* -------- TEXT MESSAGE -------- */
+    /* ---------- TEXT MESSAGE ---------- */
     if (message.type === "text") {
-      const text = message.text.body.toLowerCase();
+      const text = message.text.body.trim().toLowerCase();
       console.log("Incoming text:", text);
 
-      if (text === "hi" || text === "hello") {
-        await sendWelcomeButtons(from);
-      } else {
-        await sendTextMessage(
-          from,
-          "❓ Please use the buttons below. Send *Hi* to start."
-        );
-      }
+      // 👉 Respond to ANY text
+      await sendWelcomeButtons(from);
     }
 
-    /* -------- BUTTON RESPONSE -------- */
-    // if (message.type === "button") {
-    //   const payload = message.button.payload;
-    //   console.log("Button clicked:", payload);
+    /* ---------- BUTTON CLICK (CORRECT WAY) ---------- */
+    if (
+      message.type === "interactive" &&
+      message.interactive?.type === "button_reply"
+    ) {
+      const payload = message.interactive.button_reply.id;
+      console.log("Button clicked:", payload);
 
-    //   if (payload === "ORDER_HELP") {
-    //     await sendTextMessage(from, "📦 Please share your Order ID");
-    //   } else if (payload === "TRACK_ORDER") {
-    //     await sendTextMessage(from, "🔍 Please enter your Order ID to track");
-    //   } else if (payload === "SUPPORT") {
-    //     await sendTextMessage(
-    //       from,
-    //       "📞 Our support team will contact you shortly."
-    //     );
-    //   }
-    // }
-
-    /* ---------- BUTTON CLICK ---------- */
-if (message.type === "button") {
-  const payload = message.button.payload;
-  console.log("Button clicked:", payload);
-
-  if (payload === "BTN_1") {
-    await sendTextMessage(from, "✅ You clicked Button 1");
-  } 
-  else if (payload === "BTN_2") {
-    await sendTextMessage(from, "✅ You clicked Button 2");
-  } 
-  else if (payload === "BTN_3") {
-    await sendTextMessage(from, "✅ You clicked Button 3");
-  }
-}
-
+      if (payload === "BTN_1") {
+        await sendTextMessage(from, "🤖 You clicked Button 1");
+      } else if (payload === "BTN_2") {
+        await sendTextMessage(from, "🤖 You clicked Button 2");
+      } else if (payload === "BTN_3") {
+        await sendTextMessage(from, "🤖 You clicked Button 3");
+      }
+    }
 
     res.sendStatus(200);
   } catch (err) {
     console.error("Webhook error:", err);
-    res.sendStatus(200); // ALWAYS return 200 to Meta
+    res.sendStatus(200); // MUST always be 200
   }
 });
 
 /* ============================
-   3️⃣ SEND BUTTON MESSAGE
+   SEND BUTTON MESSAGE
    ============================ */
-
-// async function sendWelcomeButtons(to: string) {
-//   await axios.post(
-//     `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`,
-//     {
-//       messaging_product: "whatsapp",
-//       to,
-//       type: "interactive",
-//       interactive: {
-//         type: "button",
-//         body: {
-//           text: "👋 Welcome! How can I help you today?",
-//         },
-//         action: {
-//           buttons: [
-//             {
-//               type: "reply",
-//               reply: {
-//                 id: "ORDER_HELP",
-//                 title: "📦 Order help",
-//               },
-//             },
-//             {
-//               type: "reply",
-//               reply: {
-//                 id: "TRACK_ORDER",
-//                 title: "🔍 Track order",
-//               },
-//             },
-//             {
-//               type: "reply",
-//               reply: {
-//                 id: "SUPPORT",
-//                 title: "📞 Talk to support",
-//               },
-//             },
-//           ],
-//         },
-//       },
-//     },
-//     {
-//       headers: {
-//         Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-//         "Content-Type": "application/json",
-//       },
-//     }
-//   );
-// }
-
 
 async function sendWelcomeButtons(to: string) {
   await axios.post(
@@ -259,9 +185,8 @@ async function sendWelcomeButtons(to: string) {
   );
 }
 
-
 /* ============================
-   4️⃣ SEND TEXT MESSAGE
+   SEND TEXT MESSAGE
    ============================ */
 
 async function sendTextMessage(to: string, body: string) {
@@ -299,3 +224,4 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
